@@ -1,0 +1,6 @@
+# Document Review (run with: uv run app.py, or pip install -r requirements.txt then python3 app.py)
+anthropic
+openai
+openpyxl
+python-docx
+pywebview>=5

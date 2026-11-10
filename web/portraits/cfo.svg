@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Portrait of Elena Varga, the Skeptical CFO">
+  <defs>
+    <clipPath id="c"><circle cx="100" cy="100" r="100"/></clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B4F7A"/><stop offset="1" stop-color="#002B49"/></linearGradient>
+  </defs>
+  <g clip-path="url(#c)">
+    <rect width="200" height="200" fill="url(#bg)"/>
+    <circle cx="160" cy="40" r="46" fill="#77C5D5" opacity=".14"/>
+    <!-- back hair -->
+    <path d="M62 100 C58 58 80 44 102 44 C128 44 144 62 140 102 C139 120 136 134 130 140 L72 140 C66 132 63 118 62 100 Z" fill="#5A2A1E"/>
+    <!-- blazer and blouse -->
+    <path d="M24 200 C26 164 56 146 100 146 C144 146 174 164 176 200 Z" fill="#0E1F33"/>
+    <path d="M84 146 L100 178 L116 146 Z" fill="#672A7D"/>
+    <path d="M82 146 L100 182 L88 200 L64 200 L72 152 Z" fill="#16314F"/>
+    <path d="M118 146 L100 182 L112 200 L136 200 L128 152 Z" fill="#16314F"/>
+    <!-- neck and head -->
+    <rect x="89" y="116" width="22" height="34" rx="9" fill="#D9A585"/>
+    <ellipse cx="71" cy="98" rx="6" ry="9" fill="#E8B796"/>
+    <ellipse cx="129" cy="98" rx="6" ry="9" fill="#E8B796"/>
+    <circle cx="70" cy="109" r="2.6" fill="#E9E3F2"/>
+    <circle cx="130" cy="109" r="2.6" fill="#E9E3F2"/>
+    <ellipse cx="100" cy="94" rx="29" ry="35" fill="#F1C7A6"/>
+    <!-- fringe -->
+    <path d="M69 92 C68 62 86 52 104 52 C124 52 136 66 132 92 C126 80 112 70 94 70 C84 76 76 84 69 92 Z" fill="#6B3424"/>
+    <!-- brows, eyes, glasses -->
+    <path d="M83 85 Q90 82 96 85" stroke="#4A2419" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <path d="M104 85 Q111 81 118 84" stroke="#4A2419" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <circle cx="90" cy="95" r="2.8" fill="#1D1D1F"/>
+    <circle cx="111" cy="95" r="2.8" fill="#1D1D1F"/>
+    <rect x="79" y="88" width="21" height="14" rx="5" fill="#ffffff" fill-opacity=".12" stroke="#0E1F33" stroke-width="2"/>
+    <rect x="101" y="88" width="21" height="14" rx="5" fill="#ffffff" fill-opacity=".12" stroke="#0E1F33" stroke-width="2"/>
+    <!-- nose and a dry, level mouth -->
+    <path d="M100 99 Q97 107 101 109" stroke="#C98E6E" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M92 117 Q100 119 108 116" stroke="#9A4A45" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

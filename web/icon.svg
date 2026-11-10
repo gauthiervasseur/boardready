@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B3A60"/><stop offset=".55" stop-color="#002B49"/><stop offset="1" stop-color="#672A7D"/></linearGradient>
+    <linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".18"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".28"/></filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#g)"/>
+  <rect x="100" y="100" width="824" height="412" rx="185" fill="url(#s)"/>
+  <!-- the document -->
+  <g filter="url(#sh)">
+    <path d="M300 230h290l134 134v400a40 40 0 0 1-40 40H300a40 40 0 0 1-40-40V270a40 40 0 0 1 40-40z" fill="#fff"/>
+    <path d="M590 230v134h134z" fill="#D9E6EE"/>
+  </g>
+  <g stroke="#C9D5DF" stroke-width="26" stroke-linecap="round">
+    <path d="M330 420h250M330 490h320M330 560h200"/>
+  </g>
+  <!-- the panel: three reviewers -->
+  <g stroke="#fff" stroke-width="18">
+    <circle cx="420" cy="720" r="74" fill="#3C8C94"/>
+    <circle cx="530" cy="720" r="74" fill="#B3261E"/>
+    <circle cx="640" cy="720" r="74" fill="#77C5D5"/>
+  </g>
+  <path d="M598 722l32 32 62-70" fill="none" stroke="#002B49" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

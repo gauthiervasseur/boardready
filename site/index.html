@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BoardReady</title>
+  <meta name="description" content="BoardReady: submit a Markdown, Word or Excel document to three finance personas — the Skeptical CFO, the Group Controller and the Red-Team Reviewer — and get an AFP-styled review back.">
+  <!-- AFP tokens, type and brand art. The relative path works from the folder and from the app's server. -->
+  <link rel="stylesheet" href="../../../styles/page_afp.css">
+  <link rel="icon" href="../web/icon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --ink: #0F1B2A; --muted: #5B6B7D; --line: #E1E7EE; --canvas: #F4F6F9; --red: #B3261E;
+      --shadow: 0 1px 2px rgba(0,43,73,.06), 0 12px 32px rgba(0,43,73,.08);
+      --wrap: 1160px;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; background: #fff; color: var(--ink); font: 400 16px/1.6 var(--font_body); }
+    h1, h2, h3 { margin: 0; text-align: inherit; }
+    p { font-size: inherit; line-height: inherit; color: inherit; }
+    a { color: inherit; }
+    .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 28px; }
+    .eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--purple); }
+    .section { padding: 96px 0; }
+    .section h2 { font-size: 36px; line-height: 1.15; color: var(--navy); margin-bottom: 14px; letter-spacing: -.01em; }
+    .section .intro { max-width: 680px; color: var(--muted); font-size: 18px; margin: 0 0 44px; }
+    .center { text-align: center; }
+    .center .intro { margin-left: auto; margin-right: auto; }
+
+    /* nav */
+    .nav { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,.86); backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); border-bottom: 1px solid var(--line); }
+    .nav .wrap { display: flex; align-items: center; gap: 28px; height: 66px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--navy); text-decoration: none; }
+    .logo i { width: 32px; height: 32px; border-radius: 8px; background: var(--logo-mark) center / contain no-repeat; }
+    .nav-links { display: flex; gap: 24px; margin-left: auto; font-size: 14.5px; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; }
+    .nav-links a:hover { color: var(--navy); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 15px; text-decoration: none; transition: transform .15s, box-shadow .2s, background-position .4s; }
+    .btn.primary { color: #fff; background: linear-gradient(120deg, var(--navy), #3A2A6B 60%, var(--purple)); background-size: 160% 100%; box-shadow: 0 8px 22px rgba(0,43,73,.25); }
+    .btn.primary:hover { background-position: 100% 0; transform: translateY(-1px); }
+    .btn.light { color: #fff; border: 1.5px solid rgba(255,255,255,.4); }
+    .btn.light:hover { background: rgba(255,255,255,.08); }
+    .btn.small { padding: 9px 15px; font-size: 14px; }
+
+    /* hero */
+    .hero { position: relative; overflow: hidden; color: #fff; padding: 84px 0 0;
+      background: radial-gradient(1000px 420px at 85% -10%, rgba(119,197,213,.33), transparent 60%), linear-gradient(120deg, #002B49 0%, #0B3A60 55%, #3A2A6B 100%); }
+    .hero::before { content: ""; position: absolute; left: -20px; top: 40px; width: 150px; height: 520px; background: var(--logo-motif) center / contain no-repeat; opacity: .35; }
+    .hero .wrap { position: relative; }
+    .hero .eyebrow { color: var(--sky); }
+    .hero h1 { font-size: 56px; line-height: 1.04; letter-spacing: -.02em; color: #fff; max-width: 980px; margin-bottom: 20px; }
+    .hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--sky), #C9A4DA); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero .lede { max-width: 640px; font-size: 19px; color: rgba(255,255,255,.84); margin: 0 0 30px; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
+    .faces { display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; margin-bottom: 56px; }
+    .faces span { display: flex; }
+    .faces img { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 0 0 3px #0B3A60; margin-right: -9px; }
+    .window { position: relative; border-radius: 14px 14px 0 0; overflow: hidden; background: #fff; box-shadow: 0 -10px 60px rgba(0,0,0,.35); max-width: 1060px; margin: 0 auto; }
+    .window-bar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; background: #ECEFF3; border-bottom: 1px solid #DCE2E8; }
+    .window-bar i { width: 11px; height: 11px; border-radius: 50%; background: #FF5F57; }
+    .window-bar i:nth-child(2) { background: #FEBC2E; } .window-bar i:nth-child(3) { background: #28C840; }
+    .window-bar span { margin: 0 auto; font-size: 12.5px; color: #6B7785; font-weight: 600; transform: translateX(-28px); }
+    .window img { display: block; width: 100%; height: auto; }
+
+    /* numbers strip */
+    .strip { background: var(--canvas); border-bottom: 1px solid var(--line); }
+    .strip .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding-top: 34px; padding-bottom: 34px; }
+    .num b { display: block; font-size: 34px; line-height: 1.1; color: var(--navy); font-family: var(--font_display); }
+    .num span { color: var(--muted); font-size: 14px; }
+
+    /* panel */
+    .personas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+    .persona { --c: var(--navy); position: relative; padding: 30px 26px 26px; border-radius: 20px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; }
+    .persona::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--c); }
+    .persona img { width: 104px; height: 104px; border-radius: 50%; box-shadow: 0 0 0 5px #fff, 0 0 0 7px color-mix(in srgb, var(--c) 35%, #fff); margin-bottom: 18px; }
+    .persona h3 { font-size: 21px; color: var(--navy); }
+    .persona .tag { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--c); margin: 4px 0 12px; }
+    .persona p { color: var(--muted); font-size: 15px; margin: 0 0 14px; }
+    .persona .q { padding: 12px 14px; border-radius: 12px; background: #F5F7FA; color: var(--navy); font-size: 14.5px; font-style: italic; margin-bottom: 14px; }
+    .persona dl { margin: 0; font-size: 14px; }
+    .persona dt { font-weight: 700; color: var(--navy); margin-top: 8px; }
+    .persona dd { margin: 0; color: var(--muted); }
+
+    /* actions */
+    .actions-sec { background: var(--canvas); }
+    .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+    .action { --c: var(--purple); padding: 28px; border-radius: 20px; background: #fff; box-shadow: var(--shadow); }
+    .action .icon { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 12%, #fff); color: var(--c); margin-bottom: 18px; }
+    .action .icon svg { width: 26px; height: 26px; }
+    .action h3 { font-size: 20px; color: var(--navy); margin-bottom: 8px; }
+    .action p { color: var(--muted); font-size: 15px; margin: 0 0 16px; }
+    .action .gets { border-top: 1px dashed var(--line); padding-top: 14px; font-size: 14px; color: var(--ink); }
+    .action .gets b { color: var(--c); }
+
+    /* how */
+    .steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; counter-reset: s; }
+    .stp { position: relative; padding: 26px 22px; border-radius: 18px; border: 1px solid var(--line); background: #fff; }
+    .stp::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; margin-bottom: 14px; color: #fff; font-weight: 800; background: linear-gradient(135deg, var(--purple), #8B4AA3); box-shadow: 0 6px 14px rgba(103,42,125,.28); }
+    .stp h3 { font-size: 17px; color: var(--navy); margin-bottom: 6px; }
+    .stp p { margin: 0; color: var(--muted); font-size: 14.5px; }
+    .stp code { font-size: 13px; }
+
+    /* output */
+    .output { background: linear-gradient(180deg, #fff, var(--canvas)); }
+    .pages { display: flex; justify-content: center; align-items: flex-end; gap: 0; padding: 10px 0 20px; }
+    .pages a { display: block; width: 23%; max-width: 260px; margin: 0 -1.4%; border-radius: 6px; overflow: hidden; box-shadow: 0 6px 16px rgba(0,30,60,.14), 0 26px 50px rgba(0,30,60,.16); transition: transform .25s ease; background: #fff; }
+    .pages a:nth-child(1) { transform: rotate(-6deg) translateY(16px); z-index: 1; }
+    .pages a:nth-child(2) { transform: rotate(-2deg); z-index: 2; }
+    .pages a:nth-child(3) { transform: rotate(2deg); z-index: 3; }
+    .pages a:nth-child(4) { transform: rotate(6deg) translateY(16px); z-index: 2; }
+    .pages a:hover { transform: translateY(-12px) rotate(0); z-index: 5; }
+    .pages img { display: block; width: 100%; height: auto; }
+    .out-notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 54px; }
+    .out-notes div { padding-left: 16px; border-left: 3px solid var(--teal); }
+    .out-notes b { display: block; color: var(--navy); margin-bottom: 4px; }
+    .out-notes span { color: var(--muted); font-size: 15px; }
+
+    /* guardrails */
+    .guard { background: var(--navy); color: #fff; position: relative; overflow: hidden; }
+    .guard::after { content: ""; position: absolute; right: -20px; top: 30px; width: 150px; height: 520px; background: var(--logo-motif) center / contain no-repeat; opacity: .35; }
+    .guard h2 { color: #fff !important; }
+    .guard .eyebrow { color: var(--sky); }
+    .guard .intro { color: rgba(255,255,255,.75) !important; }
+    .guard code { background: rgba(255,255,255,.14) !important; color: #fff !important; }
+    .rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; position: relative; z-index: 1; }
+    .rule { padding: 22px; border-radius: 16px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); }
+    .rule b { display: block; color: var(--sky); margin-bottom: 6px; font-size: 16px; }
+    .rule span { color: rgba(255,255,255,.8); font-size: 14.5px; }
+
+    /* install */
+    .install { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .card { padding: 28px; border-radius: 20px; border: 1px solid var(--line); background: #fff; box-shadow: var(--shadow); }
+    .card h3 { font-size: 19px; color: var(--navy); margin-bottom: 10px; }
+    .card p { color: var(--muted); font-size: 15px; margin: 0 0 12px; }
+    .card pre { margin: 0 0 12px !important; font-size: 13px !important; border-radius: 10px; }
+    .card pre code { font-size: 13px !important; }
+    .card.dl { background: linear-gradient(135deg, #F6F8FB, #F3F0F7); }
+    .card .btn { margin: 4px 0 12px; }
+    .small-note { font-size: 13px !important; margin: 0 !important; }
+    .reqs { margin-top: 22px; padding: 22px 26px; border-radius: 16px; background: var(--canvas); font-size: 15px; color: var(--muted); }
+    .reqs b { color: var(--navy); }
+
+    footer.site { padding: 36px 0 44px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+    footer.site .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: space-between; }
+
+    @media (max-width: 960px) {
+      .personas, .actions, .rules, .install, .out-notes { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .strip .wrap { grid-template-columns: 1fr 1fr; }
+      .hero h1 { font-size: 42px; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 16px; }
+      .nav-links { display: none; }
+      .nav .btn { margin-left: auto; }
+      .section { padding: 64px 0; }
+      .section h2 { font-size: 28px; }
+      .hero { padding-top: 54px; }
+      .hero h1 { font-size: 34px; }
+      .hero::before, .guard::after { display: none; }
+      .steps { grid-template-columns: 1fr; }
+      .pages a { width: 30%; }
+      .pages a:nth-child(4) { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top"><i aria-hidden="true"></i>BoardReady</a>
+    <div class="nav-links">
+      <a href="#panel">The panel</a>
+      <a href="#requests">Requests</a>
+      <a href="#how">How it works</a>
+      <a href="#output">The output</a>
+      <a href="#install">Install</a>
+    </div>
+    <a class="btn primary small" href="../dist/BoardReady.dmg" download>Download for Mac</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <p class="eyebrow">AFP 2026 · Think and Ask</p>
+    <h1>Is it board-ready? <em>Ask the panel first.</em></h1>
+    <p class="lede">BoardReady puts your memo, report or workbook in front of three demanding finance readers before it reaches the real ones. Choose who reads it and what you want from them; get one review document back, in the AFP style.</p>
+    <div class="cta">
+      <a class="btn primary" href="../dist/BoardReady.dmg" download>Download for Mac</a>
+      <a class="btn light" href="res/sample-review.pdf">See a sample review (PDF)</a>
+    </div>
+    <div class="faces">
+      <span><img src="../web/portraits/cfo.svg" alt=""><img src="../web/portraits/controller.svg" alt=""><img src="../web/portraits/redteam.svg" alt=""></span>
+      Elena Varga, the Group Controller and the Red-Team Reviewer
+    </div>
+    <div class="window">
+      <div class="window-bar"><i></i><i></i><i></i><span>BoardReady</span></div>
+      <img src="res/app-screenshot.jpg" alt="The BoardReady app: a sample memo loaded, three persona cards selected, and the request choices below">
+    </div>
+  </div>
+</header>
+
+<div class="strip">
+  <div class="wrap">
+    <div class="num"><b>3</b><span>personas, read from the Think_Ask persona files</span></div>
+    <div class="num"><b>3</b><span>requests: criticize, check consistency, suggest enrichments</span></div>
+    <div class="num"><b>4</b><span>file types: Markdown, Word, Excel and CSV</span></div>
+    <div class="num"><b>~40 s</b><span>for nine reviews and a synthesis of the sample memo</span></div>
+  </div>
+</div>
+
+<main>
+  <div class="section" id="panel">
+    <div class="wrap">
+      <p class="eyebrow">The panel</p>
+      <h2>Three readers who each want something different</h2>
+      <p class="intro">Each persona is a stake, a set of priorities and a blind spot. Together they disagree, and the disagreement is where the sharper business question hides.</p>
+      <div class="personas">
+        <article class="persona" style="--c:#002B49">
+          <img src="../web/portraits/cfo.svg" alt="Portrait of Elena Varga">
+          <h3>Elena Varga</h3>
+          <div class="tag">The Skeptical CFO</div>
+          <p>The one who signs and presents to the board. Use her for any number that goes up the chain.</p>
+          <div class="q">“Will this number survive the audit committee?”</div>
+          <dl><dt>Cares about</dt><dd>Does it tie? Is the variance real or mechanical? What decision does it change?</dd>
+          <dt>Blind spot</dt><dd>Loves a clean story, and may accept a tidy bridge over a messy truth.</dd></dl>
+        </article>
+        <article class="persona" style="--c:#3C8C94">
+          <img src="../web/portraits/controller.svg" alt="Portrait of the Group Controller">
+          <h3>The Group Controller</h3>
+          <div class="tag">Ties every number</div>
+          <p>The one who checks that every number ties. Use them on anything built from many source files.</p>
+          <div class="q">“If the document does not state the reconciliation, the number is untied.”</div>
+          <dl><dt>Cares about</dt><dd>Every figure sourced, every method stated, estimates never passed off as actuals.</dd>
+          <dt>Blind spot</dt><dd>Checks that numbers tie, not whether the analysis answers the business question.</dd></dl>
+        </article>
+        <article class="persona" style="--c:#B3261E">
+          <img src="../web/portraits/redteam.svg" alt="Portrait of the Red-Team Reviewer">
+          <h3>The Red-Team Reviewer</h3>
+          <div class="tag">Attacks from outside</div>
+          <p>The one who attacks from outside finance. Use them on anything the people it describes will challenge.</p>
+          <div class="q">“Which sentence will the audit-committee chair read aloud after the restatement?”</div>
+          <dl><dt>Cares about</dt><dd>The figure a regional manager will dispute, and the sentence an auditor will quote.</dd>
+          <dt>Blind spot</dt><dd>Assumes bad faith and worst cases.</dd></dl>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <div class="section actions-sec" id="requests">
+    <div class="wrap">
+      <p class="eyebrow">Your request</p>
+      <h2>Tell them what you expect</h2>
+      <p class="intro">Tick one, two or all three. Every persona answers every request you pick, each from their own stake.</p>
+      <div class="actions">
+        <div class="action" style="--c:#B3261E">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg></div>
+          <h3>Criticize</h3>
+          <p>Find what would stop the document, in the persona's own review format, with every objection tied to a quoted sentence.</p>
+          <div class="gets"><b>You get</b> a one-line verdict, the strongest objections, and the question they would ask you in the meeting.</div>
+        </div>
+        <div class="action" style="--c:#3C8C94">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14M4 7h16"/><path d="M7 7 4 14a3 3 0 0 0 6 0L7 7zM17 7l-3 7a3 3 0 0 0 6 0l-3-7z"/></svg></div>
+          <h3>Review for consistency</h3>
+          <p>Hunt for the places where the document disagrees with itself: totals that do not foot, shifting dates and currencies, a term with two meanings.</p>
+          <div class="gets"><b>You get</b> a table of paired quotes that conflict, why each matters, and the one to fix first.</div>
+        </div>
+        <div class="action" style="--c:#672A7D">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></div>
+          <h3>Suggest enrichments</h3>
+          <p>Ask what to add so the document survives its reader: a bridge, a reconciliation, a sensitivity, an owner, a decision.</p>
+          <div class="gets"><b>You get</b> up to six additions, where each goes, and the data you must fetch. Never invented figures.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="how">
+    <div class="wrap">
+      <p class="eyebrow">How it works</p>
+      <h2>Four steps, about a minute</h2>
+      <p class="intro">No framework and no agent loop: each review is one persona file plus one call to the model, run in parallel. The chair only combines; it adds nothing of its own.</p>
+      <div class="steps">
+        <div class="stp"><h3>Drop the document</h3><p>Markdown is read as is. Word goes through pandoc, Excel sheet by sheet with its formulas listed.</p></div>
+        <div class="stp"><h3>Pick the panel</h3><p>Tick the personas and the requests. The prompts are the Think_Ask persona files, word for word.</p></div>
+        <div class="stp"><h3>The panel reviews</h3><p>All reviews run at once. An optional chair combines them and sharpens the business question.</p></div>
+        <div class="stp"><h3>Read the document</h3><p>A Marp file on <code>page_afp</code>, laid out like <code>AFP2026_Doc_template.md</code>, plus HTML and PDF.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section output" id="output">
+    <div class="wrap center">
+      <p class="eyebrow">The output</p>
+      <h2>A review document you can hand to someone</h2>
+      <p class="intro">Real pages from a review of the workshop's sample forecast memo. Long reviews flow onto as many Letter pages as they need, so nothing runs past the footer.</p>
+      <div class="pages">
+        <a href="res/sample-review.pdf"><img src="res/page-01.jpg" alt="Cover page with the AFP and Data Wise Academy logos"></a>
+        <a href="res/sample-review.pdf"><img src="res/page-02.jpg" alt="Review brief with each reviewer's verdict in a table"></a>
+        <a href="res/sample-review.pdf"><img src="res/page-03.jpg" alt="Panel synthesis on a light blue page"></a>
+        <a href="res/sample-review.pdf"><img src="res/page-13.jpg" alt="The Group Controller's critique with a table of figures and their status"></a>
+      </div>
+      <div class="out-notes" style="text-align:left">
+        <div><b>Brief and verdicts</b><span>One table with every reviewer's verdict, so you see the whole panel at a glance.</span></div>
+        <div><b>A divider per persona</b><span>Each persona's reviews follow their own navy divider, one request per page.</span></div>
+        <div><b>Editable source</b><span>The Markdown stays yours: change it in VS Code with the Marp preview, export again.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section guard">
+    <div class="wrap">
+      <p class="eyebrow">Guardrails</p>
+      <h2>Built to criticize, not to rewrite</h2>
+      <p class="intro">The rules come from the persona files and are repeated in every request.</p>
+      <div class="rules">
+        <div class="rule"><b>Critique, never rewrite</b><span>The personas point at sentences. The author keeps the pen and every number.</span></div>
+        <div class="rule"><b>No invented figures</b><span>No made-up rates, sources or recomputations. “I would need to check” is an acceptable answer.</span></div>
+        <div class="rule"><b>Quote the document</b><span>Every objection points at an exact sentence or number, so you can check it.</span></div>
+        <div class="rule"><b>Blind spots on purpose</b><span>Each persona states one. When two reviewers disagree, check the source yourself.</span></div>
+        <div class="rule"><b>Stays on your Mac</b><span>Your document goes nowhere but to the model provider you chose. Reviews are saved on your Mac.</span></div>
+        <div class="rule"><b>Your model, your key</b><span>Anthropic or OpenAI, with your own API key, entered once in Settings and kept on your Mac.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="install">
+    <div class="wrap">
+      <p class="eyebrow">Install</p>
+      <h2>On your Mac in two minutes</h2>
+      <p class="intro">One download, no terminal. Everything BoardReady needs is inside the app, including the export to PDF.</p>
+      <div class="install">
+        <div class="card dl">
+          <h3>1. Download and drag</h3>
+          <p>Open <b>BoardReady.dmg</b> and drag BoardReady onto the Applications folder.</p>
+          <a class="btn primary" href="../dist/BoardReady.dmg" download>Download BoardReady.dmg</a>
+          <p class="small-note">About 100 MB · Mac with Apple silicon (M1 or later) · macOS 12 or later</p>
+        </div>
+        <div class="card">
+          <h3>2. Open it the first time</h3>
+          <p>BoardReady is not notarized by Apple, so macOS asks once: right-click the app in Applications, choose <b>Open</b>, then <b>Open</b> again. If macOS still refuses, go to System Settings › Privacy &amp; Security › <b>Open Anyway</b>.</p>
+        </div>
+        <div class="card">
+          <h3>3. Add your API key</h3>
+          <p>Click <b>Settings</b>, choose Anthropic or OpenAI and a model, and paste your key. It is billed by your provider, separately from a ChatGPT or Claude subscription, and it never leaves your Mac except to call that provider.</p>
+        </div>
+        <div class="card">
+          <h3>4. Drop a document</h3>
+          <p>Or click <b>Try the sample forecast memo</b>. Reviews are saved in <b>Documents › BoardReady</b> as Markdown, HTML and PDF.</p>
+        </div>
+      </div>
+      <div class="reqs">
+        <b>For the PDF export:</b> Google Chrome or Microsoft Edge installed. · <b>Workshop folder:</b> facilitators can also run BoardReady from <code>1. Think_Ask/document review</code> with <code>uv run app.py</code>, where it reads the persona files and <code>.env</code> live.
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>BoardReady · AFP 2026 workshop, Think and Ask · Data Wise Academy</span>
+    <span>The personas are fictional. Read every review as a pre-mortem, not a verdict.</span>
+  </div>
+</footer>
+
+</body>
+</html>

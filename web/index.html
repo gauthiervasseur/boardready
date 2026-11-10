@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="dr-token" content="__DR_TOKEN__">
+  <title>BoardReady</title>
+  <!-- The AFP page theme: colours, type, brand art. app.css lays the app out on top of it. -->
+  <link rel="stylesheet" href="/theme/page_afp.css">
+  <link rel="stylesheet" href="/web/app.css">
+  <link rel="icon" href="/web/icon.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div class="brand-text">
+        <span class="brand-name">BoardReady</span>
+        <span class="brand-sub">Think · Ask persona panel</span>
+      </div>
+    </div>
+    <nav class="topnav">
+      <span class="status-chip" id="statusChip"><span class="dot"></span><span id="statusText">Checking…</span></span>
+      <button class="ghost" id="openSettings" type="button" title="Provider, model and API key">Settings</button>
+      <button class="ghost" id="openFolder" type="button" title="Open the folder where reviews are saved">Outputs</button>
+      <a class="ghost" href="/site/" id="siteLink">About</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Pre-mortem, before the meeting does it</p>
+      <h1>Put your draft in front of the panel</h1>
+      <p class="lede">Drop a memo, a Word report or an Excel workbook. Choose who reads it and what you want from them. You get an AFP-styled review document back, ready to read or share.</p>
+    </div>
+  </div>
+
+  <div class="banner" id="envBanner" hidden>
+    <strong>No API key yet.</strong> Add your provider, model and API key to start reviewing.
+    <button class="ghost small" id="bannerSettings" type="button">Open Settings</button>
+  </div>
+
+  <main class="layout">
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="card step" id="step1">
+        <div class="step-head"><span class="step-num">1</span><h2>Your document</h2><span class="step-hint">Markdown · Word · Excel · CSV</span></div>
+
+        <label class="dropzone" id="dropzone" tabindex="0">
+          <input type="file" id="fileInput" accept=".md,.markdown,.txt,.docx,.xlsx,.xlsm,.csv" hidden>
+          <div class="dz-art" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="64" height="64"><path d="M16 6h22l12 12v38a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V10a4 4 0 0 1 4-4z" fill="#fff" stroke="currentColor" stroke-width="2.5"/><path d="M38 6v12h12" fill="none" stroke="currentColor" stroke-width="2.5"/><path class="dz-arrow" d="M31 46V28m-7 7 7-7 7 7" fill="none" stroke="var(--purple)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="dz-title">Drag and drop a document here</div>
+          <div class="dz-sub">or <span class="link">browse your Mac</span></div>
+          <div class="dz-types"><span class="type md">MD</span><span class="type docx">DOCX</span><span class="type xlsx">XLSX</span><span class="type csv">CSV</span></div>
+        </label>
+
+        <div class="filecard" id="fileCard" hidden>
+          <span class="type big" id="fileType">MD</span>
+          <div class="file-main">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-meta" id="fileMeta"></div>
+          </div>
+          <button class="ghost small" id="togglePreview" type="button">Preview text</button>
+          <button class="ghost small" id="replaceFile" type="button">Replace</button>
+        </div>
+        <pre class="preview" id="preview" hidden></pre>
+        <div class="error-line" id="fileError" hidden></div>
+        <button class="sample-link" id="trySample" type="button">No document at hand? Try the workshop's sample forecast memo</button>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="card step" id="step2">
+        <div class="step-head"><span class="step-num">2</span><h2>Who reviews it</h2><button class="link-btn" id="allPersonas" type="button">Select all</button></div>
+        <div class="persona-grid" id="personaGrid"></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="card step" id="step3">
+        <div class="step-head"><span class="step-num">3</span><h2>What you expect from them</h2></div>
+        <div class="action-grid" id="actionGrid"></div>
+        <div class="options">
+          <label class="switch"><input type="checkbox" id="optSynthesis" checked><span class="track"></span><span class="switch-label"><b>Chair's synthesis</b> combines the reviews and sharpens the business question</span></label>
+          <label class="switch"><input type="checkbox" id="optPdf" checked><span class="track"></span><span class="switch-label"><b>Export PDF</b> as well as Markdown and HTML</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right rail -->
+    <aside class="rail">
+      <div class="card run-card" id="runCard">
+        <h3>Your panel</h3>
+        <div class="panel-faces" id="panelFaces"></div>
+        <ul class="summary" id="summary"></ul>
+        <button class="primary" id="runBtn" type="button" disabled>Run the review</button>
+        <p class="fine" id="runHint">Drop a document to start.</p>
+      </div>
+
+      <div class="card progress-card" id="progressCard" hidden>
+        <div class="progress-head"><h3 id="progressTitle">Reviewing…</h3><span class="timer" id="timer">0s</span></div>
+        <div class="bar"><span id="barFill"></span></div>
+        <ul class="tasks" id="taskList"></ul>
+      </div>
+
+      <div class="card result-card" id="resultCard" hidden>
+        <div class="result-badge" aria-hidden="true">✓</div>
+        <h3>Your review is ready</h3>
+        <p class="file-name" id="resultName"></p>
+        <div class="result-actions" id="resultActions"></div>
+        <p class="fine warn" id="resultWarn" hidden></p>
+        <button class="ghost wide" id="newRun" type="button">Run another review</button>
+      </div>
+
+      <div class="card history-card">
+        <div class="progress-head"><h3>Recent reviews</h3></div>
+        <ul class="history" id="history"><li class="fine">None yet.</li></ul>
+      </div>
+    </aside>
+  </main>
+
+  <div class="drop-overlay" id="dropOverlay" aria-hidden="true"><div>Drop to load the document</div></div>
+
+  <div class="modal" id="settingsModal" hidden>
+    <form class="settings-box" id="settingsForm" autocomplete="off">
+      <div class="modal-bar"><span>Settings</span><button class="ghost small" id="settingsClose" type="button">Close</button></div>
+      <div class="settings-body">
+        <label class="field"><span>Provider</span>
+          <select id="setProvider"><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option></select>
+        </label>
+        <label class="field"><span>Model</span>
+          <input id="setModel" list="modelList" placeholder="claude-sonnet-5-5" spellcheck="false">
+          <datalist id="modelList"><option value="claude-sonnet-5-5"><option value="claude-opus-5-5"><option value="claude-haiku-5-5"><option value="gpt-5-mini"></datalist>
+        </label>
+        <label class="field"><span>API key</span>
+          <input id="setKey" type="password" placeholder="Paste your key" spellcheck="false">
+          <small id="keyHint"></small>
+        </label>
+        <p class="fine left" id="settingsWhere"></p>
+        <div class="error-line" id="settingsError" hidden></div>
+        <button class="primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-box">
+      <div class="modal-bar"><span id="modalTitle">Preview</span><button class="ghost small" id="modalClose" type="button">Close</button></div>
+      <iframe id="modalFrame" title="Review preview"></iframe>
+    </div>
+  </div>
+
+  <script src="/web/app.js"></script>
+</body>
+</html>
