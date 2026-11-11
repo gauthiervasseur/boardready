@@ -12,13 +12,13 @@
 BoardReady: submit a Markdown, Word or Excel document to the Think_Ask personas.
 
 Run it:
-  uv run app.py              native Mac window (what "BoardReady.app" does)
+  uv run app.py              native window (what "BoardReady.app" / BoardReady.exe does)
   uv run app.py --browser    same app in your browser, as a local website
   uv run app.py --serve      server only (prints the address; nothing opens)
   python3 app.py --browser   without uv, after: pip install -r requirements.txt
 
 The server listens on 127.0.0.1 only: nothing is reachable from another machine.
-Your document leaves the Mac only to go to the model provider named in Think_Ask/.env.
+Your document leaves your computer only to go to the model provider named in your settings (.env, or the Settings panel).
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ from __future__ import annotations
 import base64
 import json
 import mimetypes
+import os
 import secrets
 import socket
 import subprocess
@@ -51,6 +52,19 @@ MAX_UPLOAD = 40 * 1024 * 1024
 
 mimetypes.add_type("text/markdown; charset=utf-8", ".md")
 mimetypes.add_type("image/svg+xml", ".svg")
+
+
+def open_path(target: Path, reveal: bool = False) -> None:
+    """Open a file or folder with its default app, or show it in Finder / Explorer."""
+    if engine.IS_WIN:
+        if reveal and target.is_file():
+            subprocess.Popen(["explorer", f"/select,{target}"])
+        else:
+            os.startfile(str(target))  # type: ignore[attr-defined]  # Windows only
+    elif engine.IS_MAC:
+        subprocess.Popen(["open", "-R", str(target)] if reveal else ["open", str(target)])
+    else:
+        subprocess.Popen(["xdg-open", str(target.parent if reveal and target.is_file() else target)])
 
 
 def inside(base: Path, rel: str) -> Path | None:
@@ -113,10 +127,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_file(SITE / "index.html")
         if path.startswith("/site/"):
             return self.send_file(inside(SITE, path[6:]))
-        if path in ("/theme/page_afp.css", "/styles/page_afp.css"):  # the second: the website's relative link
+        if path in ("/theme/page_afp.css", "/styles/page_afp.css", "/resources/styles/page_afp.css"):  # the others: the website's relative link
             return self.send_file(engine.THEME_CSS if engine.THEME_CSS.exists() else None)
-        if path == "/dist/BoardReady.dmg":  # the website's download link, from the workshop folder
-            return self.send_file(inside(HERE / "dist", "BoardReady.dmg"), download=True)
+        if path in ("/dist/BoardReady.dmg", "/dist/BoardReady-Setup.exe"):  # the website's download links, from the workshop folder
+            return self.send_file(inside(HERE / "dist", path.rsplit("/", 1)[-1]), download=True)
         if path.startswith("/outputs/"):
             return self.send_file(inside(engine.OUTPUTS, path[9:]), download="download=1" in self.path)
         if path == "/api/config":
@@ -183,8 +197,7 @@ class Handler(BaseHTTPRequestHandler):
             target = inside(engine.OUTPUTS, data.get("file", ""))
             if not target:
                 return self.send_json({"error": "Not found"}, 404)
-            args = ["open", "-R", str(target)] if path == "/api/reveal" else ["open", str(target)]
-            subprocess.Popen(args)
+            open_path(target, reveal=path == "/api/reveal")
             return self.send_json({"ok": True})
 
         if path == "/api/settings":
@@ -196,7 +209,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/open-folder":
             engine.OUTPUTS.mkdir(parents=True, exist_ok=True)
-            subprocess.Popen(["open", str(engine.OUTPUTS)])
+            open_path(engine.OUTPUTS)
             return self.send_json({"ok": True})
 
         self.send_json({"error": "Not found"}, 404)
@@ -229,6 +242,10 @@ def brand_native_app():
 
 
 def main():
+    # A windowed Windows app has no console: sys.stdout is None and print() would raise.
+    for name in ("stdout", "stderr"):
+        if getattr(sys, name) is None:
+            setattr(sys, name, open(os.devnull, "w", encoding="utf-8"))
     if {"-h", "--help"} & set(sys.argv):
         print(__doc__)
         return
@@ -258,7 +275,14 @@ def main():
                 "BoardReady", url, width=1280, height=900, min_size=(980, 700),
                 background_color="#F4F6F9",
             )
-            webview.start()
+            if engine.IS_WIN:
+                # Keep the UI's remembered choices between launches (pywebview defaults to a private session).
+                store = engine.app_settings_file().parent / "webview"
+                store.mkdir(parents=True, exist_ok=True)
+                webview.settings["ALLOW_DOWNLOADS"] = True  # the report's Download buttons show a Save dialog
+                webview.start(private_mode=False, storage_path=str(store))
+            else:
+                webview.start()
             server.shutdown()
             return
         except Exception as e:  # no pywebview: fall back to the browser

@@ -1,0 +1,58 @@
+# Builds the Windows app (BoardReady-Setup.exe and a zip) on a GitHub-hosted Windows runner,
+# since PyInstaller cannot cross-compile from a Mac.
+#   By hand:    Actions > Build Windows app > Run workflow, then download the artifact.
+#   On a tag:   git tag v1.0.0 && git push origin v1.0.0  also attaches the files to a Release
+#               (the website's download buttons point at the latest Release). Add BoardReady.dmg
+#               to the Release by hand.
+# The exe is not code-signed: Windows SmartScreen asks once (More info > Run anyway).
+name: Build Windows app
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Node is bundled into the app for the HTML/PDF export (Marp CLI).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Inno Setup (for the installer)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue) -and -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Build
+        shell: pwsh
+        run: ./build_exe.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BoardReady-Windows
+          path: |
+            dist/BoardReady-Setup.exe
+            dist/BoardReady-Windows.zip
+          if-no-files-found: error
+
+      - name: Attach to the Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/BoardReady-Setup.exe
+            dist/BoardReady-Windows.zip

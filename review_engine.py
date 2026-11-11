@@ -9,8 +9,9 @@ BoardReady engine: the part of the app that does the work.
                          reviews into Letter pages so nothing runs past the footer.
   4. render_report()     exports that Markdown to HTML (and PDF) with the Marp CLI.
 
-The personas are NOT copied here: each one is read from its file in the Think_Ask folder
-(02, 03 and 04), so editing a persona file changes the app on its next run.
+Run from the AFP workshop folder, each persona is read live from its file in the Think_Ask
+folder (02, 03 and 04), so editing a persona file changes the app on its next run. Run from the
+standalone repo, the personas and the theme are read from resources/ (see sync_resources.sh).
 """
 
 from __future__ import annotations
@@ -34,23 +35,57 @@ from pathlib import Path
 
 # Two ways to run:
 #   from the workshop folder: personas, theme and .env are read live from AFP-Workshop;
-#   as the packaged app (the DMG): they are copies inside the app, the API key lives in
-#   ~/Library/Application Support/BoardReady and reviews go to ~/Documents/BoardReady.
+#   as the packaged app (the DMG on a Mac, the installer on Windows): they are copies inside
+#   the app. The API key lives in ~/Library/Application Support/BoardReady (Mac) or
+#   %APPDATA%\BoardReady (Windows); reviews go to Documents/BoardReady.
 FROZEN = bool(getattr(sys, "frozen", False))
+IS_WIN = sys.platform == "win32"
+IS_MAC = sys.platform == "darwin"
 HERE = Path(__file__).resolve().parent            # .../1. Think_Ask/document review
 RES = Path(getattr(sys, "_MEIPASS", HERE))         # web/, site/, bundled copies
+# A windowed Windows app has no console: never let a child process open one.
+NO_WINDOW = {"creationflags": subprocess.CREATE_NO_WINDOW} if IS_WIN else {}
+
+
+def documents_dir() -> Path:
+    """The user's Documents folder. On Windows it may be redirected (OneDrive), so ask the shell."""
+    if IS_WIN:
+        try:
+            import ctypes
+
+            buf = ctypes.create_unicode_buffer(260)
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf) == 0 and buf.value:  # 5 = CSIDL_PERSONAL
+                return Path(buf.value)
+        except Exception:
+            pass
+    return Path.home() / "Documents"
+
+
+def app_settings_file() -> Path:
+    if IS_WIN:
+        return Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming") / "BoardReady" / "settings.env"
+    if IS_MAC:
+        return Path.home() / "Library" / "Application Support" / "BoardReady" / "settings.env"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "BoardReady" / "settings.env"
+
+
 if FROZEN:
     PERSONA_DIR = RES / "personas"
     THEME_CSS = RES / "styles" / "page_afp.css"
-    OUTPUTS = Path.home() / "Documents" / "BoardReady"
-    SETTINGS_FILE = Path.home() / "Library" / "Application Support" / "BoardReady" / "settings.env"
+    OUTPUTS = documents_dir() / "BoardReady"
+    SETTINGS_FILE = app_settings_file()
 else:
     THINK_ASK = HERE.parent                        # .../1. Think_Ask
     WORKSHOP = THINK_ASK.parent                    # .../AFP-Workshop
-    PERSONA_DIR = THINK_ASK
-    THEME_CSS = WORKSHOP / "styles" / "page_afp.css"
+    if (THINK_ASK / "02-persona-skeptical-cfo.md").exists() and (WORKSHOP / "styles" / "page_afp.css").exists():
+        PERSONA_DIR = THINK_ASK                    # inside the workshop folder: read the live files
+        THEME_CSS = WORKSHOP / "styles" / "page_afp.css"
+        SETTINGS_FILE = THINK_ASK / ".env"         # shared with 08-premortem-agent.py
+    else:                                          # the standalone BoardReady repo: use resources/
+        PERSONA_DIR = HERE / "resources" / "personas"
+        THEME_CSS = HERE / "resources" / "styles" / "page_afp.css"
+        SETTINGS_FILE = HERE / ".env"
     OUTPUTS = HERE / "outputs"
-    SETTINGS_FILE = THINK_ASK / ".env"             # shared with 08-premortem-agent.py
 SETTINGS_FILE = Path(os.environ.get("DR_SETTINGS_FILE", SETTINGS_FILE))
 SAMPLE_MEMO = PERSONA_DIR / "sample-draft-forecast-memo.md"
 MARP_VERSION = "4.5.1"
@@ -257,7 +292,10 @@ def save_settings(provider: str, model: str, api_key: str | None) -> None:
             done.add(name)
     lines += [f"{k}={v}" for k, v in values.items() if k not in done]
     SETTINGS_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    os.chmod(SETTINGS_FILE, 0o600)
+    try:
+        os.chmod(SETTINGS_FILE, 0o600)  # owner only (a no-op on Windows, where the profile folder is already private)
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -356,11 +394,15 @@ def _extract_excel(path: Path) -> tuple[str, dict, list]:
 
 
 def _extract_docx(path: Path) -> str:
-    pandoc = shutil.which("pandoc") or next((p for p in ("/usr/local/bin/pandoc", "/opt/homebrew/bin/pandoc") if Path(p).exists()), None)
+    local = os.environ.get("LOCALAPPDATA", "")
+    pandoc = shutil.which("pandoc") or next((p for p in (
+        "/usr/local/bin/pandoc", "/opt/homebrew/bin/pandoc",
+        str(Path(local) / "Pandoc" / "pandoc.exe"), r"C:\Program Files\Pandoc\pandoc.exe",
+    ) if p and Path(p).exists()), None)
     if pandoc:
         out = subprocess.run(
             [pandoc, str(path), "-f", "docx", "-t", "gfm", "--wrap=none"],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, **NO_WINDOW,
         )
         if out.returncode == 0 and out.stdout.strip():
             return out.stdout
@@ -1012,9 +1054,11 @@ def write_report(job: Job, settings: dict) -> Path:
 # ---------------------------------------------------------------------------
 
 def bundled_marp() -> tuple[Path, Path] | None:
-    """The packaged app ships Node and the Marp CLI in Contents/Resources/marp."""
-    for base in (RES / "marp", Path(sys.executable).resolve().parent.parent / "Resources" / "marp"):
-        node, cli = base / "node", base / "node_modules" / "@marp-team" / "marp-cli" / "marp-cli.js"
+    """The packaged app ships Node and the Marp CLI: Contents/Resources/marp (Mac), <app>/_internal/marp (Windows)."""
+    node_name = "node.exe" if IS_WIN else "node"
+    exe = Path(sys.executable).resolve().parent
+    for base in (RES / "marp", exe.parent / "Resources" / "marp", exe / "marp", exe / "_internal" / "marp"):
+        node, cli = base / node_name, base / "node_modules" / "@marp-team" / "marp-cli" / "marp-cli.js"
         if node.exists() and cli.exists():
             return node, cli
     return None
@@ -1026,6 +1070,9 @@ def find_npx() -> str | None:
         return found
     candidates = sorted(glob.glob(os.path.expanduser("~/.nvm/versions/node/*/bin/npx")), reverse=True)
     candidates += ["/opt/homebrew/bin/npx", "/usr/local/bin/npx"]
+    for var in ("ProgramFiles", "ProgramFiles(x86)"):
+        if os.environ.get(var):
+            candidates.append(str(Path(os.environ[var]) / "nodejs" / "npx.cmd"))
     return next((c for c in candidates if Path(c).exists()), None)
 
 
@@ -1051,14 +1098,15 @@ def render_report(md_path: Path, pdf: bool = True) -> tuple[Path | None, Path | 
         npx = find_npx()
         if not npx:
             return None, None, "Node.js (npx) was not found, so only the Markdown was written."
-        env["PATH"] = str(Path(npx).parent) + os.pathsep + env.get("PATH", "/usr/bin:/bin")
+        env["PATH"] = str(Path(npx).parent) + os.pathsep + env.get("PATH", os.defpath)
         base = [npx, "--yes", f"@marp-team/marp-cli@{MARP_VERSION}"]
     # Deck path first, --theme-set last: it is an array option and swallows what follows.
     common = ["--allow-local-files", "--no-stdin", "--theme-set", str(THEME_CSS)]
     html_path, pdf_path, errors = md_path.with_suffix(".html"), md_path.with_suffix(".pdf"), []
 
     def run(args):
-        r = subprocess.run(args, capture_output=True, text=True, timeout=240, env=env, stdin=subprocess.DEVNULL)
+        r = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=240, env=env, stdin=subprocess.DEVNULL, **NO_WINDOW)
         if r.returncode != 0:
             errors.append((r.stderr or r.stdout).strip().splitlines()[-1:] or ["Marp failed"])
         return r.returncode == 0

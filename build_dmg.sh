@@ -8,12 +8,11 @@
 # if the build says Marp was not found).
 #
 # Not inside: any API key. Each user adds theirs in the app's Settings.
-# The personas are copied at build time: after editing a persona file, build again.
+# The personas are copied from resources/ at build time: after editing a persona file, run
+# ./sync_resources.sh (inside the workshop folder), then build again.
 set -euo pipefail
 cd "$(dirname "$0")"
 HERE="$(pwd)"
-THINK_ASK="$(cd .. && pwd)"
-WORKSHOP="$(cd ../.. && pwd)"
 MARP_VERSION="4.5.1"
 NAME="BoardReady"
 BUILD="${TMPDIR:-/tmp}/boardready-build"
@@ -26,8 +25,8 @@ rm -rf "$BUILD"
 mkdir -p "$BUILD/data/personas" "$BUILD/data/styles" "$BUILD/dmg" dist
 
 echo "1/6  Resources"
-cp "$THINK_ASK"/0{2,3,4}-persona-*.md "$THINK_ASK/sample-draft-forecast-memo.md" "$BUILD/data/personas/"
-cp "$WORKSHOP/styles/page_afp.css" "$BUILD/data/styles/"
+cp resources/personas/* "$BUILD/data/personas/"
+cp resources/styles/page_afp.css "$BUILD/data/styles/"
 rsync -a --exclude '.DS_Store' web site "$BUILD/data/"
 
 echo "2/6  Icon"

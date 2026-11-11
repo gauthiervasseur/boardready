@@ -2,3 +2,9 @@ outputs/
 __pycache__/
 *.app/
 dist/
+.env
+.env.*
+!example.env
+.DS_Store
+*.dmg
+_site/

@@ -6,7 +6,7 @@
   <title>BoardReady</title>
   <meta name="description" content="BoardReady: submit a Markdown, Word or Excel document to three finance personas — the Skeptical CFO, the Group Controller and the Red-Team Reviewer — and get an AFP-styled review back.">
   <!-- AFP tokens, type and brand art. The relative path works from the folder and from the app's server. -->
-  <link rel="stylesheet" href="../../../styles/page_afp.css">
+  <link rel="stylesheet" href="../resources/styles/page_afp.css">
   <link rel="icon" href="../web/icon.svg" type="image/svg+xml">
   <style>
     :root {
@@ -179,7 +179,7 @@
       <a href="#output">The output</a>
       <a href="#install">Install</a>
     </div>
-    <a class="btn primary small" href="../dist/BoardReady.dmg" download>Download for Mac</a>
+    <a class="btn primary small" href="#install">Download</a>
   </div>
 </nav>
 
@@ -190,6 +190,7 @@
     <p class="lede">BoardReady puts your memo, report or workbook in front of three demanding finance readers before it reaches the real ones. Choose who reads it and what you want from them; get one review document back, in the AFP style.</p>
     <div class="cta">
       <a class="btn primary" href="../dist/BoardReady.dmg" download>Download for Mac</a>
+      <a class="btn light" href="../dist/BoardReady-Setup.exe" download>Download for Windows</a>
       <a class="btn light" href="res/sample-review.pdf">See a sample review (PDF)</a>
     </div>
     <div class="faces">
@@ -321,8 +322,8 @@
         <div class="rule"><b>No invented figures</b><span>No made-up rates, sources or recomputations. “I would need to check” is an acceptable answer.</span></div>
         <div class="rule"><b>Quote the document</b><span>Every objection points at an exact sentence or number, so you can check it.</span></div>
         <div class="rule"><b>Blind spots on purpose</b><span>Each persona states one. When two reviewers disagree, check the source yourself.</span></div>
-        <div class="rule"><b>Stays on your Mac</b><span>Your document goes nowhere but to the model provider you chose. Reviews are saved on your Mac.</span></div>
-        <div class="rule"><b>Your model, your key</b><span>Anthropic or OpenAI, with your own API key, entered once in Settings and kept on your Mac.</span></div>
+        <div class="rule"><b>Stays on your computer</b><span>Your document goes nowhere but to the model provider you chose. Reviews are saved on your computer.</span></div>
+        <div class="rule"><b>Your model, your key</b><span>Anthropic or OpenAI, with your own API key, entered once in Settings and kept on your computer.</span></div>
       </div>
     </div>
   </div>
@@ -330,30 +331,36 @@
   <div class="section" id="install">
     <div class="wrap">
       <p class="eyebrow">Install</p>
-      <h2>On your Mac in two minutes</h2>
+      <h2>On your Mac or PC in two minutes</h2>
       <p class="intro">One download, no terminal. Everything BoardReady needs is inside the app, including the export to PDF.</p>
       <div class="install">
         <div class="card dl">
-          <h3>1. Download and drag</h3>
+          <h3>1. On a Mac: download and drag</h3>
           <p>Open <b>BoardReady.dmg</b> and drag BoardReady onto the Applications folder.</p>
           <a class="btn primary" href="../dist/BoardReady.dmg" download>Download BoardReady.dmg</a>
           <p class="small-note">About 100 MB · Mac with Apple silicon (M1 or later) · macOS 12 or later</p>
         </div>
+        <div class="card dl">
+          <h3>1. On Windows: download and run</h3>
+          <p>Run <b>BoardReady-Setup.exe</b>. No administrator rights needed. Windows may say "Windows protected your PC" because the app is not code-signed: click <b>More info</b>, then <b>Run anyway</b>.</p>
+          <a class="btn primary" href="../dist/BoardReady-Setup.exe" download>Download BoardReady-Setup.exe</a>
+          <p class="small-note">Windows 10 or 11 · uses Microsoft Edge WebView2, already on Windows 11</p>
+        </div>
         <div class="card">
-          <h3>2. Open it the first time</h3>
+          <h3>2. Mac: open it the first time</h3>
           <p>BoardReady is not notarized by Apple, so macOS asks once: right-click the app in Applications, choose <b>Open</b>, then <b>Open</b> again. If macOS still refuses, go to System Settings › Privacy &amp; Security › <b>Open Anyway</b>.</p>
         </div>
         <div class="card">
           <h3>3. Add your API key</h3>
-          <p>Click <b>Settings</b>, choose Anthropic or OpenAI and a model, and paste your key. It is billed by your provider, separately from a ChatGPT or Claude subscription, and it never leaves your Mac except to call that provider.</p>
+          <p>Click <b>Settings</b>, choose Anthropic or OpenAI and a model, and paste your key. It is billed by your provider, separately from a ChatGPT or Claude subscription, and it never leaves your computer except to call that provider.</p>
         </div>
-        <div class="card">
+        <div class="card" style="grid-column:1/-1">
           <h3>4. Drop a document</h3>
           <p>Or click <b>Try the sample forecast memo</b>. Reviews are saved in <b>Documents › BoardReady</b> as Markdown, HTML and PDF.</p>
         </div>
       </div>
       <div class="reqs">
-        <b>For the PDF export:</b> Google Chrome or Microsoft Edge installed. · <b>Workshop folder:</b> facilitators can also run BoardReady from <code>1. Think_Ask/document review</code> with <code>uv run app.py</code>, where it reads the persona files and <code>.env</code> live.
+        <b>For the PDF export:</b> Google Chrome or Microsoft Edge installed (Edge comes with Windows). · <b>Workshop folder:</b> facilitators can also run BoardReady from <code>1. Think_Ask/document review</code> with <code>uv run app.py</code>, where it reads the persona files and <code>.env</code> live.
       </div>
     </div>
   </div>

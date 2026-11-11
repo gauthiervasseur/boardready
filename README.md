@@ -1,6 +1,6 @@
 # BoardReady
 
-A Mac app that submits a Markdown, Word or Excel document to the three Think_Ask personas and returns one review document in the AFP style.
+A Mac and Windows app that submits a Markdown, Word or Excel document to the three Think_Ask personas and returns one review document in the AFP style.
 
 - **Who reviews it:** Elena Varga (the Skeptical CFO), the Group Controller and the Red-Team Reviewer. Pick any of them.
 - **What you ask for:** criticize, review for consistency, suggest enrichments. Pick any of them. Every chosen persona answers every chosen request.
@@ -8,11 +8,24 @@ A Mac app that submits a Markdown, Word or Excel document to the three Think_Ask
 
 The persona prompts are read live from `02-persona-skeptical-cfo.md`, `03-persona-controller.md` and `04-persona-red-team-reviewer.md` in the Think_Ask folder. Edit a persona file and the next review uses the new version.
 
+## Where it lives
+
+The code lives in the AFP workshop folder (`1. Think_Ask/document review/`) and is published as its own repository, **gauthiervasseur/boardready**, with the website on GitHub Pages (`https://gauthiervasseur.github.io/boardready/`, built from `site/` by `.github/workflows/pages.yml`). In the standalone repo the personas and the `page_afp` theme come from `resources/`; inside the workshop folder the app reads the live files instead, and `./sync_resources.sh` refreshes `resources/` after you edit a persona. The download buttons point at the latest GitHub Release: attach `BoardReady.dmg` (from `./build_dmg.sh`) by hand; the Windows files are attached by the workflow.
+
 ## The DMG (for anyone)
 
 `./build_dmg.sh` builds `dist/BoardReady.dmg` (about 100 MB): a self-contained app for Apple-silicon Macs. Python, the UI, the website, copies of the three persona files, the sample memo, `page_afp.css`, Node and the Marp CLI are all inside; no API key is. Users drag it to Applications, right-click › Open the first time (the app is ad-hoc signed, not notarized), and add their provider, model and key in **Settings**, which saves them to `~/Library/Application Support/BoardReady/settings.env`. Reviews go to `~/Documents/BoardReady`. The PDF export needs Chrome or Edge.
 
 The personas inside the DMG are copies: after editing a persona file, run `./build_dmg.sh` again. The build copies Node and Marp CLI 4.5.1 from this Mac (the npx cache), and builds Python in a clean uv environment.
+
+## The Windows version
+
+`build_exe.ps1` is the counterpart of `build_dmg.sh`. Run it on a Windows 10/11 PC (PyInstaller does not cross-compile): `powershell -ExecutionPolicy Bypass -File build_exe.ps1`. It needs Python 3.10 to 3.13 and Node.js on PATH, and produces in `dist/`:
+
+- `BoardReady/` and `BoardReady-Windows.zip`: the app folder (double-click `BoardReady.exe`), with Python, the UI, the personas, `page_afp.css`, Node and Marp CLI inside;
+- `BoardReady-Setup.exe`: a per-user installer (no admin rights), only if Inno Setup 6 is installed (`installer.iss`).
+
+Without a PC, the workflow `.github/workflows/windows-build.yml` (repo root) builds the same files on a GitHub Windows runner: Actions › Build Windows apps › Run workflow, then download the artifacts. The key is saved to `%APPDATA%\BoardReady\settings.env` and reviews go to `Documents\BoardReady`. The exe is not code-signed, so SmartScreen shows "Windows protected your PC" once (More info › Run anyway). The window is WebView2, which ships with Windows 11 and current Windows 10; PDF export uses Edge or Chrome. The smoke test in the script starts the packaged exe with `--serve` and checks `/api/config`. The Windows build is not yet tested on a real PC.
 
 ## Run it from the workshop folder
 
@@ -38,7 +51,10 @@ The presentation website is `site/index.html`. Open it from the folder, or at `/
 | `web/` | The app: `index.html`, `app.css` (on top of `styles/page_afp.css`), `app.js`, portraits, icon |
 | `site/` | The presentation website, with screenshots and a sample review |
 | `build_app.sh` | Builds a light `BoardReady.app` that runs this folder's code with uv |
+| `resources/`, `sync_resources.sh` | Copies of the personas, sample memo and `page_afp.css` used by the standalone repo and both builds |
+| `tools/build_pages.py` | Assembles the GitHub Pages site into `_site/` |
 | `build_dmg.sh` | Builds the self-contained `dist/BoardReady.dmg` |
+| `build_exe.ps1`, `installer.iss` | Builds the Windows app folder, zip and `BoardReady-Setup.exe` |
 | `outputs/` | Every review: `.md`, `.html`, `.pdf` |
 
 ## How a review runs
